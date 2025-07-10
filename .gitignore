@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env
+
+/lib/generated/prisma
 
 # vercel
 .vercel
@@ -39,3 +42,37 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files and backups
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+
+# Override files created by Terraform Enterprise/Cloud
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Sensitive variable files (if any)
+*.tfvars
+*.tfvars.json
+
+# Lock files (optional - can be committed)
+.terraform.lock.hcl
+
+# IDE files (optional, add your own if needed)
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,31 @@
+# Build output
+.next
+out
+
+# Node modules
+node_modules
+
+# Logs
+*.log
+
+# Env files
+.env
+.env.local
+
+# Git
+.git
+.gitignore
+
+# Misc
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Generated Prisma files
+prisma/migrations
+
+# Optional: ignore specific folders
+coverage
+dist
+src/components/ui/*
+src/generated/*
