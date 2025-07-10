@@ -76,3 +76,13 @@ terraform.rc
 .vscode/
 .idea/
 *.swp
+
+# ───────────────────────────────
+# Terraform - deploy-infra folder
+# ───────────────────────────────
+deploy-infra/.terraform/
+deploy-infra/*.tfstate
+deploy-infra/*.tfstate.*
+deploy-infra/terraform.tfvars
+deploy-infra/crash.log
+deploy-infra/.terraform.lock.hcl

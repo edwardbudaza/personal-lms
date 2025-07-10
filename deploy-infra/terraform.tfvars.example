@@ -1,0 +1,14 @@
+github_token                = "ghp_XXXXXXXXXXXXXXXXXX"
+repo_url                    = "https://github.com/your-user/your-repo"
+
+database_url                = "postgresql://..."
+supabase_url                = "https://your-project.supabase.co"
+supabase_anon_key           = "your-anon-key"
+
+r2_endpoint                 = "https://your-r2-endpoint"
+r2_bucket_name              = "course-videos"
+r2_token                    = "token"
+r2_account_id               = "account"
+r2_access_key_id            = "access-key"
+r2_secret_access_key        = "secret"
+r2_public_domain            = "videos.nibl.ink"
