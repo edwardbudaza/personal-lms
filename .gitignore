@@ -86,3 +86,5 @@ deploy-infra/*.tfstate.*
 deploy-infra/terraform.tfvars
 deploy-infra/crash.log
 deploy-infra/.terraform.lock.hcl
+# Ignore Terraform output
+deploy-infra/out
