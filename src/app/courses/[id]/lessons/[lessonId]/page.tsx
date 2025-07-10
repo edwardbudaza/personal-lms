@@ -60,11 +60,7 @@ export default async function LessonPage(props: LessonPageProps) {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <VideoPlayer lesson={lesson} />
-            <LessonNavigation
-              courseId={courseId}
-              prevLesson={prevLesson}
-              nextLesson={nextLesson}
-            />
+            <LessonNavigation courseId={courseId} prevLesson={prevLesson} nextLesson={nextLesson} />
           </div>
           <div className="lg:col-span-1">
             <LessonNotes

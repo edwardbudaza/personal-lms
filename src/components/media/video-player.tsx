@@ -29,7 +29,7 @@ export function VideoPlayer({ lesson /**,courseId*/ }: VideoPlayerProps) {
   // const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
 
-  console.log("Video URL: ", lesson.videoUrl)
+  console.log('Video URL: ', lesson.videoUrl);
 
   const toggleCompletion = async () => {
     setLoading(true);

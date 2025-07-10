@@ -11,7 +11,7 @@ interface CoursePageProps {
 
 export default async function CoursePage({ params }: CoursePageProps) {
   const user = await requireAuth();
-  const {id: courseId} = await params
+  const { id: courseId } = await params;
 
   const course = await db.course.findFirst({
     where: {

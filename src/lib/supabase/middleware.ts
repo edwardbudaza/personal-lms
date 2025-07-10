@@ -1,10 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  const response = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,37 +13,46 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value}) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({
-            request,
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
           });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
         },
       },
     }
   );
 
-  // IMPORTANT: DO NOT REMOVE auth.getUser()
+  // Keep this for Supabase session hydration
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Allow unauthorized users to access login, auth, signup pages
-  const allowedPaths = ['/login', '/sign-up'];
+  const pathname = request.nextUrl.pathname;
 
-  if (
-    !user &&
-    !allowedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+  // Skip middleware logic for public static assets
+  const isStaticAsset =
+    pathname.startsWith('/_next') ||
+    pathname.endsWith('.ico') ||
+    pathname.match(/\.(svg|png|jpg|jpeg|webp|gif|mp4|ts)$/);
+
+  if (isStaticAsset) return response;
+
+  // Publicly accessible pages (unauthenticated)
+  const publicPaths = ['/login', '/sign-up', '/forgot-password', '/reset-password', '/check-email'];
+
+  const isPublic = publicPaths.some((path) => pathname.startsWith(path));
+  const isAuthProtected = pathname.startsWith('/courses') || pathname.startsWith('/dashboard');
+
+  if (!user && isAuthProtected && !isPublic) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    loginUrl.searchParams.set('redirectedFrom', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Return response with updated cookies/session info
-  return supabaseResponse;
+  // If already logged in, redirect away from auth pages
+  if (user && isPublic) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  return response;
 }

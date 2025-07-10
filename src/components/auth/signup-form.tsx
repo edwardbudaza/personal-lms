@@ -1,4 +1,4 @@
-// @/components/auth/login-form.tsx
+// @/components/auth/signup-form.tsx
 'use client';
 
 import { useState, FormEvent } from 'react';
@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { AuthForm, AuthInput } from './auth-form';
 import Link from 'next/link';
 
-export function LoginForm() {
+export function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,17 +20,26 @@ export function LoginForm() {
     setLoading(true);
     setError('');
 
+    // Basic validation
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${location.origin}/auth/callback`,
+        },
       });
 
       if (error) {
         setError(error.message);
       } else {
-        router.push('/');
-        router.refresh();
+        router.push(`/check-email?email=${encodeURIComponent(email)}`);
       }
     } catch {
       setError('An unexpected error occurred');
@@ -40,37 +49,24 @@ export function LoginForm() {
   };
 
   const footer = (
-    <div className="space-y-4">
-      {/* Forgot Password */}
-      <div className="text-center">
-        <Link
-          href="/forgot-password"
-          className="text-muted-foreground hover:text-primary text-sm transition-colors"
-        >
-          Forgot password?
+    <div className="text-center">
+      <p className="text-muted-foreground text-sm">
+        Already have an account?{' '}
+        <Link href="/login" className="text-primary font-medium hover:underline">
+          Sign In
         </Link>
-      </div>
-
-      {/* Sign Up Link */}
-      <div className="text-center">
-        <p className="text-muted-foreground text-sm">
-          Don&apos;t have an account?{' '}
-          <Link href="/sign-up" className="text-primary font-medium hover:underline">
-            Sign Up
-          </Link>
-        </p>
-      </div>
+      </p>
     </div>
   );
 
   return (
     <AuthForm
-      title="Welcome Back"
-      subtitle="Sign in to your LMS account"
+      title="Create Account"
+      subtitle="Sign up to access the LMS platform"
       onSubmit={handleSubmit}
       loading={loading}
       error={error}
-      submitText="Sign In"
+      submitText="Create Account"
       footer={footer}
     >
       <AuthInput
@@ -90,7 +86,7 @@ export function LoginForm() {
         value={password}
         onChange={setPassword}
         required
-        placeholder="Enter your password"
+        placeholder="Create a password (min 6 characters)"
       />
     </AuthForm>
   );
