@@ -54,6 +54,15 @@ resource "aws_security_group" "sg" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
+    description = "App Port (Next.js on 3000)"
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  ingress {
     description = "SSH"
     from_port   = 22
     to_port     = 22

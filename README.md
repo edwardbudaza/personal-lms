@@ -1,11 +1,11 @@
-# 🎓 Personal LMS
+# 🎓 Personal LMS  
 > **Transform long programming videos into structured, trackable learning experiences**
 
 A modern Learning Management System designed for developers who want to convert lengthy programming tutorials into organized, bite-sized lessons with progress tracking and personal notes.
 
-[![Deploy Status](https://img.shields.io/badge/deploy-amplify-orange)](https://aws.amazon.com/amplify/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Tech Stack](https://img.shields.io/badge/stack-Next.js%2014+-black)](https://nextjs.org/)
+[![Deployment](https://img.shields.io/badge/deploy-Docker%20%7C%20Terraform-green)](#-production-deployment)
 
 ---
 
@@ -16,6 +16,8 @@ Programming tutorials are often published as **massive, unstructured videos** (t
 - ❌ Impossible to track progress
 - ❌ Difficult to reference specific concepts
 - ❌ No way to add personal notes
+
+---
 
 ## 💡 **The Solution**
 
@@ -32,91 +34,77 @@ This LMS bridges the gap by letting you:
 
 ## ✨ **Features**
 
-### 🔐 **Authentication & Security**
-- Secure user authentication via Supabase
-- Protected video content with signed URLs
-- Personal workspace isolation
+### 🔐 Authentication & Security
+- Supabase Auth (email/password)
+- Middleware-protected routes
+- Signed video URLs
 
-### 📤 **Video Management**
-- Direct upload to Cloudflare R2 storage
-- Automatic video optimization
-- Secure streaming with CDN delivery
+### 📤 Video Management
+- Cloudflare R2 file uploads
+- Modular storage provider system
+- Secure video streaming
 
-### 🎯 **Course Organization**
-- Intuitive course and lesson builder
-- Drag-and-drop lesson ordering (Future feature)
-- Progress tracking per course
+### 🎯 Course Organization
+- Intuitive course + lesson builder
+- Progress tracking
+- Note-taking system
 
-### 📝 **Learning Tools**
-- Per-lesson note taking
-- Progress indicators
-- Completion tracking
-
-### 🎨 **Modern Interface**
-- Clean, responsive design
-- Dark mode support
-- Built with Tailwind CSS + shadcn/ui
+### 🌙 Interface & UX
+- Built with `shadcn/ui` + Tailwind CSS
+- Clean developer-first design
+- Responsive & accessible
 
 ---
 
 ## 🛠️ **Tech Stack**
 
-<table>
-<tr>
-<td><strong>Frontend</strong></td>
-<td>Next.js 14 (App Router), React, TypeScript</td>
-</tr>
-<tr>
-<td><strong>Styling</strong></td>
-<td>Tailwind CSS, shadcn/ui components</td>
-</tr>
-<tr>
-<td><strong>Backend</strong></td>
-<td>Supabase (Auth + PostgreSQL), Prisma ORM</td>
-</tr>
-<tr>
-<td><strong>Storage</strong></td>
-<td>Cloudflare R2 (video files)</td>
-</tr>
-<tr>
-<td><strong>Infrastructure</strong></td>
-<td>Terraform, AWS Amplify (CI/CD)</td>
-</tr>
-</table>
+| Layer           | Technologies                                                   |
+|-----------------|----------------------------------------------------------------|
+| **Frontend**    | Next.js 14+ (App Router), React, TypeScript                    |
+| **Styling**     | Tailwind CSS, shadcn/ui                                        |
+| **Backend**     | Supabase (Auth + Postgres), Prisma ORM                         |
+| **Storage**     | Cloudflare R2 (modular provider logic)                         |
+| **Infra**       | Docker, Nginx, AWS EC2, Terraform (EC2, IAM, networking)       |
+| **CI/CD**       | GitHub Actions (planned)                                       |
 
 ---
 
 ## 📁 **Project Structure**
 
-```
+```bash
 personal-lms/
-├── 📁 src/
-│   ├── 📁 app/              # Next.js App Router pages
-│   ├── 📁 components/       # Reusable UI components
-│   │   ├── 📁 auth/         # Authentication components
-│   │   ├── 📁 courses/      # Course management UI
-│   │   ├── 📁 media/        # Video player & upload
-│   │   └── 📁 ui/           # shadcn/ui components
-│   ├── 📁 lib/              # Core utilities
-│   │   ├── 📁 supabase/     # Database connection
-│   │   ├── 📁 storage/      # R2 storage logic
-│   │   └── 📁 utils/        # Helper functions
-│   ├── 📁 hooks/            # Custom React hooks
-│   └── 📁 generated/        # Prisma client
-├── 📁 prisma/               # Database schema & migrations
-├── 📁 terraform/            # Infrastructure as code
-├── 📁 deploy-infra/         # Amplify deployment config
-└── 📁 public/               # Static assets
+├── deploy-infra/         # Terraform infra: EC2, IAM, networking
+│   ├── modules/
+│   │   ├── compute/      # EC2 instance & startup script
+│   │   ├── iam/          # IAM roles and policies
+│   │   └── networking/   # VPC, subnets, security groups
+│   └── terraform.tfvars  # Sensitive variables (excluded from Git)
+├── terraform/            # R2 Bucket provisioning (separate module)
+├── prisma/               # Prisma DB schema and migrations
+├── public/               # Static assets
+├── scripts/              # Deployment helper scripts
+├── src/
+│   ├── app/              # Next.js App Router routes (auth, courses, lessons)
+│   ├── components/       # UI components (auth, media, ui, etc.)
+│   ├── lib/              # Supabase, R2, auth, and DB logic
+│   ├── hooks/            # Custom React hooks
+│   └── generated/        # Prisma client output
+├── Dockerfile            # Production Docker image
+├── docker-compose.yml    # Local development environment
+└── README.md             # This file 📘
 ```
 
 ---
 
 ## 🚀 **Quick Start**
 
-### Prerequisites
+### 📦 Prerequisites
 - Node.js 18+
-- npm or yarn
-- Git
+- Docker (for local or production builds)
+- Supabase project (for auth + DB)
+- Cloudflare R2 bucket
+
+---
 
 ### 1. **Clone & Install**
 ```bash
@@ -125,8 +113,12 @@ cd personal-lms
 npm install
 ```
 
+---
+
 ### 2. **Environment Setup**
-Create a `.env.local` file:
+
+Create a `.env.local` file in the root:
+
 ```env
 # Database
 DATABASE_URL=your_supabase_db_url
@@ -136,7 +128,7 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Cloudflare R2
-R2_ENDPOINT=your_r2_endpoint
+R2_ENDPOINT=https://<your-account-id>.r2.cloudflarestorage.com
 R2_BUCKET_NAME=course-videos
 R2_TOKEN=your_r2_token
 R2_ACCOUNT_ID=your_account_id
@@ -145,133 +137,112 @@ R2_SECRET_ACCESS_KEY=your_secret_key
 R2_PUBLIC_DOMAIN=videos.yourdomain.com
 ```
 
+---
+
 ### 3. **Database Setup**
+
 ```bash
 npx prisma db push
-npx prisma studio  # Optional: view your database
+npx prisma studio  # Optional: visual browser
 ```
 
-### 4. **Start Development**
+---
+
+### 4. **Local Development**
+
 ```bash
 npm run dev
 ```
 
-Visit `http://localhost:3000` to see your LMS in action! 🎉
+Open `http://localhost:3000` to view the LMS!
 
 ---
 
 ## 🌐 **Production Deployment**
 
-### **Automated Deployment with Terraform**
+### 💻 EC2 + Docker Setup (Terraform-managed)
 
-The entire infrastructure is provisioned and managed via Terraform:
+1. **Provision with Terraform**
 
 ```bash
-# Navigate to deployment config
 cd deploy-infra
-
-# Initialize Terraform
 terraform init
-
-# Plan deployment
 terraform plan
-
-# Deploy everything
 terraform apply
 ```
 
-**What gets deployed:**
-- 🔧 AWS Amplify application
-- 🔐 IAM roles and permissions
-- 🔗 GitHub repository connection
-- 🌍 Environment variables injection
-- 🚀 Automatic CI/CD pipeline
+This provisions:
+* EC2 instance with Docker + Nginx
+* IAM roles and policies
+* VPC, subnet, security group
+* Auto-start app via `user-data.sh`
 
-### **Continuous Deployment**
-Every push to `main` triggers automatic deployment:
-```bash
-git push origin main
-```
+2. **Deploy with Docker**
 
-### **Infrastructure Cleanup**
 ```bash
-terraform destroy
+./scripts/deploy.sh
 ```
 
 ---
 
 ## 📖 **How to Use**
 
-### **1. Prepare Your Videos**
-- Use tools like FFmpeg, VLC, or video editors to split long videos
-- Export segments as MP4 files
-- Name them descriptively (e.g., `01-introduction.mp4`, `02-setup.mp4`)
+### 🪄 Prepare Your Videos
+* Use FFmpeg, VLC, or a video editor to cut long videos
+* Name your files clearly (e.g., `01-intro.mp4`, `02-setup.mp4`)
 
-### **2. Create a Course**
-- Log into your LMS
-- Click "Create Course"
-- Add course title, description
+### 📚 Create a Course
+* Log into the LMS
+* Click **Create Course**
+* Fill out title and description
 
-### **3. Upload Lessons**
-- Navigate to your course
-- Click "Add Lesson"
-- Upload your video segment
-- Add lesson title and description
+### 🎬 Upload Lessons
+* Go into your course
+* Click **Add Lesson**
+* Upload a video and fill out lesson info
 
-### **4. Learn & Track**
-- Play lessons in order
-- Add personal notes
-- Track your progress automatically
+### 📝 Learn & Track
+* Watch lessons
+* Take notes
+* Progress auto-saves ✅
 
 ---
 
-## 🔮 **Roadmap**
+## 🔮 Roadmap
 
-### **Phase 1: Core Features** ✅
-- [x] User authentication
-- [x] Video upload & storage
-- [x] Course organization
-- [x] Progress tracking
-- [x] Note taking
+### ✅ Phase 1: Core
+* [x] Supabase Auth
+* [x] R2 Upload & Video Player
+* [x] Course + Lesson Builder
+* [x] Notes + Progress Tracking
 
-### **Phase 2: Enhanced Experience** 🚧
-- [ ] Auto-timestamp detection for long videos
-- [ ] AI-generated lesson summaries
-- [ ] Interactive quizzes
-- [ ] Search functionality
+### 🚧 Phase 2: Enhancements
+* [ ] AI lesson summaries
+* [ ] Video timestamp detection
+* [ ] Interactive quizzes
 
-### **Phase 3: Collaboration** 📋
-- [ ] Multi-user support
-- [ ] Course sharing
-- [ ] Instructor dashboard
-- [ ] Discussion forums
+### 📋 Phase 3: Collaboration
+* [ ] Multi-user support
+* [ ] Course sharing
+* [ ] Discussions
 
 ---
 
-## 🤝 **Contributing**
+## 🤝 Contributing
 
-We welcome contributions! Here's how to get started:
+Contributions welcome!
 
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** and test thoroughly
-4. **Commit your changes**: `git commit -m 'Add amazing feature'`
-5. **Push to the branch**: `git push origin feature/amazing-feature`
-6. **Open a Pull Request**
-
----
-
-## 📄 **License**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Fork the repo
+2. Create your branch: `git checkout -b feature/feature-name`
+3. Commit changes: `git commit -m "✨ New feature"`
+4. Push: `git push origin feature/feature-name`
+5. Open a Pull Request 🚀
 
 ---
 
-## 🙏 **Acknowledgments**
+## 📄 License
 
-- Built with ❤️ by [Edward Budaza](https://github.com/edwardbudaza)
-- Inspired by the need for better programming education tools
-- Special thanks to the open-source community
+Licensed under the [MIT License](LICENSE)
 
 ---
 
@@ -279,6 +250,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **"Not all learning happens in classrooms — sometimes, it starts with a YouTube link and an idea."**
 
-⭐ **Star this repo if it helps you learn better!**
+⭐ Star this repo if it helps you learn better!
 
 </div>
