@@ -8,7 +8,7 @@ const nextConfig: NextConfig | NextConfigComplete = {
   output: 'standalone',
   experimental: {
     serverActions: {
-      bodySizeLimit: '2mb',         // example value
+      bodySizeLimit: '500mb',         // example value
       allowedOrigins: ['*'],        // or ['https://your-domain.com']
     },
   },
