@@ -2,7 +2,7 @@ name: Deploy LMS to EC2 via Docker
 
 on:
   push:
-    branches: [personal-lms]
+    branches: [main]
 
 jobs:
   build:
