@@ -1,56 +1,67 @@
-# Use the official Node.js 18 Alpine image as base
-FROM node:18-alpine AS base
+# -------- Base Image --------
+    FROM node:18-alpine AS base
 
-# Install dependencies only when needed
-FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-# Install dependencies based on the preferred package manager
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Build the application
-ENV NEXT_TELEMETRY_DISABLED 1
-RUN npm run build
-
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy the built application
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
-# Copy Prisma files
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
-
-# Copy package.json for potential runtime dependencies
-COPY --from=builder /app/package.json ./package.json
-
-USER nextjs
-
-EXPOSE 3000
-
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-CMD ["node", "server.js"]
+    # Base install of system dependencies
+    RUN apk add --no-cache libc6-compat
+    
+    WORKDIR /app
+    
+    # -------- Dependencies Layer --------
+    FROM base AS deps
+    
+    # Copy lockfiles and install production deps only
+    COPY package.json package-lock.json* ./
+    COPY prisma ./prisma  
+    RUN npm ci --omit=dev
+    
+    # -------- Builder Layer --------
+    FROM base AS builder
+    
+    WORKDIR /app
+    
+    # Copy node_modules from deps layer
+    COPY --from=deps /app/node_modules ./node_modules
+    
+    # Copy app source code
+    COPY . .
+    
+    # Generate Prisma client
+    RUN npx prisma generate
+    
+    # Build the Next.js app
+    ENV NEXT_TELEMETRY_DISABLED 1
+    RUN npm run build
+    
+    # -------- Runner (Production) Layer --------
+    FROM base AS runner
+    
+    WORKDIR /app
+    
+    ENV NODE_ENV=production
+    ENV NEXT_TELEMETRY_DISABLED 1
+    ENV PORT=3000
+    ENV HOSTNAME=0.0.0.0
+    
+    # Add non-root user
+    RUN addgroup --system --gid 1001 nodejs
+    RUN adduser --system --uid 1001 nextjs
+    
+    # Copy built app
+    COPY --from=builder /app/public ./public
+    COPY --from=builder /app/.next/standalone ./
+    COPY --from=builder /app/.next/static ./.next/static
+    
+    # Copy generated Prisma client + schema
+    COPY --from=builder /app/prisma ./prisma
+    COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
+    
+    # Runtime dependencies
+    COPY --from=builder /app/package.json ./package.json
+    
+    # Use non-root user
+    USER nextjs
+    
+    EXPOSE 3000
+    
+    CMD ["node", "server.js"]
+    
