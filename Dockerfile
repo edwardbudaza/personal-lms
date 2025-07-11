@@ -1,74 +1,56 @@
-# ---------- Base image ----------
-    FROM node:18-alpine AS base
+# Use the official Node.js 18 Alpine image as base
+FROM node:18-alpine AS base
 
-    # Add required packages for Prisma and compatibility
-    RUN apk add --no-cache libc6-compat openssl
-    
-    WORKDIR /app
-    
-    # ---------- Dependencies ----------
-    FROM base AS deps
-    
-    # Copy only package manager files to install dependencies
-    COPY package.json package-lock.json* ./
-    
-    # Install production dependencies
-    RUN npm ci --omit=dev
-    
-    # Install Prisma CLI (used at build time only)
-    RUN npm install -g prisma
-    
-    # ---------- Build ----------
-    FROM base AS builder
-    
-    WORKDIR /app
-    
-    # Copy production node_modules
-    COPY --from=deps /app/node_modules ./node_modules
-    
-    # Copy rest of the source code
-    COPY . .
-    
-    # Disable Next.js telemetry
-    ENV NEXT_TELEMETRY_DISABLED=1
-    
-    # Generate Prisma client before building
-    RUN npx prisma generate
-    
-    # Build the Next.js app
-    RUN npm run build
-    
-    # ---------- Production ----------
-    FROM base AS runner
-    
-    WORKDIR /app
-    
-    # Set production environment variables
-    ENV NODE_ENV=production
-    ENV NEXT_TELEMETRY_DISABLED=1
-    ENV PORT=3000
-    ENV HOSTNAME=0.0.0.0
-    
-    # Create a non-root user
-    RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nextjs -G nodejs
-    
-    # Copy essential build outputs only
-    COPY --from=builder /app/public ./public
-    COPY --from=builder /app/.next/standalone ./
-    COPY --from=builder /app/.next/static ./.next/static
-    
-    # If you're using Prisma, copy schema and generated client
-    COPY --from=builder /app/prisma ./prisma
-    COPY --from=builder /app/src/generated ./src/generated
-    
-    # Ensure correct permissions
-    RUN mkdir -p .next && chown -R nextjs:nodejs .next
-    
-    # Use non-root user for security
-    USER nextjs
-    
-    EXPOSE 3000
-    
-    # Use Next.js standalone server
-    CMD ["node", "server.js"]
-    
+# Install dependencies only when needed
+FROM base AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build the application
+ENV NEXT_TELEMETRY_DISABLED 1
+RUN npm run build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy the built application
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+# Copy Prisma files
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
+
+# Copy package.json for potential runtime dependencies
+COPY --from=builder /app/package.json ./package.json
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["node", "server.js"]
