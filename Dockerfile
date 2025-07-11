@@ -7,16 +7,19 @@
   FROM base AS deps
   COPY package.json package-lock.json* ./
   COPY prisma ./prisma
-  # Install production dependencies only for the final runtime
-  RUN npm ci --omit=dev
+  # Install production dependencies only
+  RUN npm ci --omit=dev --cache /tmp/.npm && \
+      rm -rf /tmp/.npm && \
+      npm cache clean --force
   
   # -------- Builder Layer --------
   FROM base AS builder
   WORKDIR /app
   COPY package.json package-lock.json* ./
   COPY prisma ./prisma
-  # Install ALL dependencies (including dev deps) for building
-  RUN npm ci
+  # Install ALL dependencies for building
+  RUN npm ci --cache /tmp/.npm && \
+      rm -rf /tmp/.npm
   COPY . .
   RUN npx prisma generate
   
@@ -43,32 +46,32 @@
   ENV R2_PUBLIC_DOMAIN=$R2_PUBLIC_DOMAIN
   
   # Build Next.js app
-  RUN npm run build
+  RUN npm run build && \
+      # Clean up build cache
+      rm -rf .next/cache && \
+      npm cache clean --force
   
   # -------- Runner (Production) Layer --------
-  FROM base AS runner
+  FROM node:18-alpine AS runner
   WORKDIR /app
   ENV NODE_ENV=production
   
-  # Create user and group
-  RUN addgroup --system --gid 1001 nodejs \
-      && adduser --system --uid 1001 nextjs
+  # Install only necessary packages
+  RUN apk add --no-cache libc6-compat && \
+      addgroup --system --gid 1001 nodejs && \
+      adduser --system --uid 1001 nextjs
   
-  # Copy built application
+  # Copy only necessary files
   COPY --from=builder /app/.next/standalone ./
   COPY --from=builder /app/.next/static ./.next/static
   COPY --from=builder /app/public ./public
-  
-  # Copy Prisma schema for potential runtime migrations
   COPY --from=builder /app/prisma ./prisma
   
-  # Copy production dependencies (includes generated Prisma client)
+  # Copy only production node_modules
   COPY --from=deps /app/node_modules ./node_modules
-  
-  # Copy package.json for runtime
   COPY --from=builder /app/package.json ./package.json
   
-  # Create temp directory for uploads with proper permissions
+  # Create temp directory for uploads
   RUN mkdir -p /tmp/uploads && chown -R nextjs:nodejs /tmp/uploads
   
   # Set runtime environment variables
@@ -93,10 +96,14 @@
   ENV R2_PUBLIC_DOMAIN=$R2_PUBLIC_DOMAIN
   
   # Generate Prisma client for runtime
-  RUN npx prisma generate
+  RUN npx prisma generate && \
+      # Clean up after prisma generate
+      npm cache clean --force
   
-  # Change ownership of app directory
-  RUN chown -R nextjs:nodejs /app
+  # Change ownership and clean up
+  RUN chown -R nextjs:nodejs /app && \
+      # Remove unnecessary files
+      rm -rf /tmp/* /var/cache/apk/*
   
   USER nextjs
   
