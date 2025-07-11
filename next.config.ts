@@ -6,6 +6,12 @@ const nextConfig: NextConfig | NextConfigComplete = {
     ignoreDuringBuilds: true,
   },
   output: 'standalone',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',         // example value
+      allowedOrigins: ['*'],        // or ['https://your-domain.com']
+    },
+  },
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
@@ -60,9 +66,6 @@ const nextConfig: NextConfig | NextConfigComplete = {
     ];
   },
 
-  experimental: {
-    optimizeCss: true,
-  },
 
   webpack(config, { isServer }) {
     if (!isServer) {
