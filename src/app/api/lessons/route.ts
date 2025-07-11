@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const videoFile = formData.get('video') as File;
 
     if (!videoFile) {
-      console.warn('⚠️ No video file provided');
+      console.warn('⚠️ No video file provided - upload your video first');
       return NextResponse.json({ error: 'Video file is required' }, { status: 400 });
     }
 
