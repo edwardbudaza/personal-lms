@@ -1,27 +1,31 @@
+# -----------------------------------------
+# Root main.tf - LMS Production Deployment
+# -----------------------------------------
+
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
+}
+
+module "networking" {
+  source = "./modules/networking"
+  vpc_cidr = var.vpc_cidr
+  public_subnet_cidr = var.public_subnet_cidr
 }
 
 module "iam" {
-  source    = "./modules/iam"
-  role_name = "amplify-service-role"
+  source = "./modules/iam"
+  instance_role_name = var.instance_role_name
 }
 
-module "amplify" {
-  source                    = "./modules/amplify"
-  github_token              = var.github_token
-  repo_url                  = var.repo_url
-  amplify_service_role_arn  = module.iam.role_arn
-
-  database_url              = var.database_url
-  supabase_url              = var.supabase_url
-  supabase_anon_key         = var.supabase_anon_key
-
-  r2_endpoint               = var.r2_endpoint
-  r2_bucket_name            = var.r2_bucket_name
-  r2_token                  = var.r2_token
-  r2_account_id             = var.r2_account_id
-  r2_access_key_id          = var.r2_access_key_id
-  r2_secret_access_key      = var.r2_secret_access_key
-  r2_public_domain          = var.r2_public_domain
+module "compute" {
+  source            = "./modules/compute"
+  ami               = var.ami
+  instance_type     = var.instance_type
+  key_name          = var.key_name
+  subnet_id         = module.networking.public_subnet_id
+  security_group_id = module.networking.security_group_id
+  instance_name     = var.instance_name
+  iam_instance_profile = module.iam.instance_profile_name
 }
+
+
