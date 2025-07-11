@@ -12,46 +12,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Create .env.local file for build
-        run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.local
-          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> .env.local
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.local
-          echo "R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}" >> .env.local
-          echo "R2_BUCKET_NAME=course-videos" >> .env.local
-          echo "R2_ACCOUNT_ID=${{ secrets.R2_ACCOUNT_ID }}" >> .env.local
-          echo "R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}" >> .env.local
-          echo "R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}" >> .env.local
-          echo "R2_PUBLIC_DOMAIN=videos.nibl.ink" >> .env.local
-
+      
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build Docker image
+      
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: false
+          push: true
           tags: ${{ env.DOCKER_IMAGE }}
-          load: true
           build-args: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
             R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}
+            R2_BUCKET_NAME=course-videos
             R2_ACCOUNT_ID=${{ secrets.R2_ACCOUNT_ID }}
             R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}
             R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
-
-      - name: Push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          tags: ${{ env.DOCKER_IMAGE }}
+            R2_PUBLIC_DOMAIN=videos.nibl.ink
 
   deploy:
     runs-on: [self-hosted, ec2]
@@ -59,7 +42,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      
       - name: Create runtime .env file
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.runtime
@@ -72,21 +55,21 @@ jobs:
           echo "R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}" >> .env.runtime
           echo "R2_TOKEN=${{ secrets.R2_TOKEN }}" >> .env.runtime
           echo "R2_PUBLIC_DOMAIN=videos.nibl.ink" >> .env.runtime
-
+      
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
+      
       - name: Stop and remove old container
         run: |
           docker stop lms-app-container || true
           docker rm lms-app-container || true
-
+      
       - name: Pull latest image
         run: docker pull ${{ env.DOCKER_IMAGE }}
-
+      
       - name: Run new container
         run: |
           docker run -d \
