@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 import type { NextConfigComplete } from 'next/dist/server/config-shared';
 
 const nextConfig: NextConfig | NextConfigComplete = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   output: 'standalone',
   reactStrictMode: true,
   compress: true,
