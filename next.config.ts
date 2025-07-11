@@ -58,7 +58,6 @@ const nextConfig: NextConfig | NextConfigComplete = {
   },
 
   experimental: {
-    bundlePagesExternals: true,
     optimizeCss: true,
   },
 
@@ -70,16 +69,16 @@ const nextConfig: NextConfig | NextConfigComplete = {
       };
     }
 
-    config.module.rules.push({
-      test: /\.(mp4|webm|ogg|swf|ogv)$/,
-      use: {
-        loader: require.resolve('file-loader'),
-        options: {
-          publicPath: '/_next/static/videos/',
-          outputPath: 'static/videos/',
-        },
-      },
-    });
+    // config.module.rules.push({
+    //   test: /\.(mp4|webm|ogg|swf|ogv)$/,
+    //   use: {
+    //     loader: require.resolve('file-loader'),
+    //     options: {
+    //       publicPath: '/_next/static/videos/',
+    //       outputPath: 'static/videos/',
+    //     },
+    //   },
+    // });
 
     return config;
   },
