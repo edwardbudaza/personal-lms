@@ -19,6 +19,26 @@
     
     WORKDIR /app
     
+    # Declare build args for env vars used during build
+    ARG DATABASE_URL
+    ARG NEXT_PUBLIC_SUPABASE_URL
+    ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ARG R2_ENDPOINT
+    ARG R2_BUCKET_NAME
+    ARG R2_ACCOUNT_ID
+    ARG R2_ACCESS_KEY_ID
+    ARG R2_SECRET_ACCESS_KEY
+    
+    # Set environment variables for build
+    ENV DATABASE_URL=$DATABASE_URL
+    ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+    ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ENV R2_ENDPOINT=$R2_ENDPOINT
+    ENV R2_BUCKET_NAME=$R2_BUCKET_NAME
+    ENV R2_ACCOUNT_ID=$R2_ACCOUNT_ID
+    ENV R2_ACCESS_KEY_ID=$R2_ACCESS_KEY_ID
+    ENV R2_SECRET_ACCESS_KEY=$R2_SECRET_ACCESS_KEY
+    
     # Copy node_modules from deps layer
     COPY --from=deps /app/node_modules ./node_modules
     
@@ -28,8 +48,10 @@
     # Generate Prisma client
     RUN npx prisma generate
     
+    # Disable Next.js telemetry during build
+    ENV NEXT_TELEMETRY_DISABLED=1
+    
     # Build the Next.js app
-    ENV NEXT_TELEMETRY_DISABLED 1
     RUN npm run build
     
     # -------- Runner (Production) Layer --------
@@ -38,7 +60,7 @@
     WORKDIR /app
     
     ENV NODE_ENV=production
-    ENV NEXT_TELEMETRY_DISABLED 1
+    ENV NEXT_TELEMETRY_DISABLED=1
     ENV PORT=3000
     ENV HOSTNAME=0.0.0.0
     
@@ -46,7 +68,7 @@
     RUN addgroup --system --gid 1001 nodejs
     RUN adduser --system --uid 1001 nextjs
     
-    # Copy built app
+    # Copy built app from builder
     COPY --from=builder /app/public ./public
     COPY --from=builder /app/.next/standalone ./
     COPY --from=builder /app/.next/static ./.next/static
